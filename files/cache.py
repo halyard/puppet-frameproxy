@@ -22,7 +22,7 @@ class FrameProxy:
                 cache_content = cache_file.read()
             flow.response = http.HTTPResponse.make(200, cache_content)
 
-    def url_to_file(self, path)
+    def url_to_file(self, path: str) -> str:
         url = path.split('?')[0]
         filename = hashlib.sha512(url).encode('utf-8').hexdigest()
         return filename
