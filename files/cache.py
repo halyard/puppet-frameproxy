@@ -16,7 +16,7 @@ class FrameProxy:
                 file.write(flow.response.text)
 
     def request(self, flow: http.HTTPFlow) -> None:
-        path = os.path.join(self.path, self.url_to_file(flow.request.path)
+        path = os.path.join(self.path, self.url_to_file(flow.request.path))
         if os.path.isfile(path):
             with open(path, 'r') as cache_file:
                 cache_content = cache_file.read()
