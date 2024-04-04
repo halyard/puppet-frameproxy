@@ -8,7 +8,7 @@ class FrameProxy:
     path = "/opt/cache"
 
     def response(self, flow: http.HTTPFlow) -> None:
-        path = os.path.join(self.path, self.url_to_file(flow.request.path)
+        path = os.path.join(self.path, self.url_to_file(flow.request.path))
         if not os.path.isfile(path):
             if not os.path.exists(os.path.dirname(path)):
                 os.makedirs(os.path.dirname(path))
