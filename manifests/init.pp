@@ -1,22 +1,40 @@
 # @summary Configure mitmproxy instance for frame
 #
 # @param datadir sets location to store cached photos and TLS cert
-# @param hostname sets hostname of frame API endpoint for certificate generation
-# @param aws_access_key_id sets the AWS key to use for Route53 challenge
-# @param aws_secret_access_key sets the AWS secret key to use for the Route53 challenge
+# @param proxy_hostname sets hostname of proxy endpoint for certificate generation
+# @param proxy_aws_access_key_id sets the aws key to use for route53 challenge
+# @param proxy_aws_secret_access_key sets the aws secret key to use for the route53 challenge
+# @param intercept_hostname sets hostname of frame api endpoint for certificate generation
+# @param intercept_aws_access_key_id sets the aws key to use for route53 challenge
+# @param intercept_aws_secret_access_key sets the aws secret key to use for the route53 challenge
 # @param email sets the contact address for the certificate
 # @param ip sets the IP to use for mitmproxy docker container
 class frameproxy (
   String $datadir,
-  String $hostname,
-  String $aws_access_key_id,
-  String $aws_secret_access_key,
+  String $proxy_hostname,
+  String $proxy_aws_access_key_id,
+  String $proxy_aws_secret_access_key,
+  String $intercept_hostname,
+  String $intercept_aws_access_key_id,
+  String $intercept_aws_secret_access_key,
   String $email,
   String $ip = '172.17.0.4',
 ) {
-  $hook_script =  "#!/usr/bin/env bash
-cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/cert
+  $proxy_hook_script =  "#!/usr/bin/env bash
+cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/proxy_cert
 /usr/bin/systemctl restart container@frameproxy"
+
+  $intercept_hook_script =  "#!/usr/bin/env bash
+cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/intercept_cert
+/usr/bin/systemctl restart container@frameproxy"
+
+  $command = [
+    'mitmdump',
+    "--allow-hosts ${intercept_hostname}",
+    "--certs ${intercept_hostname}=/opt/tls/intercept_cert",
+    "--certs ${proxy_hostname}=/opt/tls/proxy_cert",
+    '-s /opt/scripts/cache.py',
+  ]
 
   firewall { '100 dnat for mitmproxy':
     chain  => 'DOCKER_EXPOSE',
@@ -25,6 +43,11 @@ cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/cert
     dport  => 8080,
     todest => "${ip}:8080",
     table  => 'nat',
+  }
+
+  file { "${datadir}/scripts/cache.py":
+    ensure => file,
+    source => 'puppet:///modules/frameproxy/cache.py',
   }
 
   file { [
@@ -36,28 +59,28 @@ cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/cert
       ensure => directory,
   }
 
-  -> acme::certificate { $hostname:
-    hook_script           => $hook_script,
-    aws_access_key_id     => $aws_access_key_id,
-    aws_secret_access_key => $aws_secret_access_key,
+  -> acme::certificate { $proxy_hostname:
+    hook_script           => $proxy_hook_script,
+    aws_access_key_id     => $proxy_aws_access_key_id,
+    aws_secret_access_key => $proxy_aws_secret_access_key,
     email                 => $email,
   }
 
-  file { "${datadir}/scripts/cache.py":
-    ensure => file,
-    source => 'puppet:///modules/frameproxy/cache.py',
+  -> acme::certificate { $intercept_hostname:
+    hook_script           => $intercept_hook_script,
+    aws_access_key_id     => $intercept_aws_access_key_id,
+    aws_secret_access_key => $intercept_aws_secret_access_key,
+    email                 => $email,
   }
 
-  docker::container { 'frameproxy':
-    image   => 'mitmproxy/mitmproxy',
-    args    => [
+  -> docker::container { 'frameproxy':
+    image => 'mitmproxy/mitmproxy',
+    args  => [
       "--ip ${ip}",
       "-v ${datadir}/cache:/opt/cache",
       "-v ${datadir}/tls:/opt/tls",
       "-v ${datadir}/scripts:/opt/scripts",
     ],
-    cmd     => "mitmdump --allow-hosts ${hostname} --certs ${hostname}=/opt/tls/cert -s /opt/scripts/cache.py",
-    require => [
-    ],
+    cmd   => join($command, ' '),
   }
 }
