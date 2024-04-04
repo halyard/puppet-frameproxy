@@ -56,7 +56,7 @@ cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_KEY_PATH > ${datadir}/tls/cert
       "-v ${datadir}/tls:/opt/tls",
       "-v ${datadir}/scripts:/opt/scripts",
     ],
-    cmd     => "mitmproxy --allow-hosts ${hostname} --certs ${hostname}=/opt/tls/cert -s /opt/scrits/cache.py",
+    cmd     => "mitmproxy --allow-hosts ${hostname} --certs ${hostname}=/opt/tls/cert -s /opt/scripts/cache.py",
     require => [
     ],
   }
