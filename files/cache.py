@@ -24,7 +24,7 @@ class FrameProxy:
 
     def url_to_file(self, path: str) -> str:
         url = path.split('?')[0]
-        filename = hashlib.sha512(url).encode('utf-8').hexdigest()
+        filename = hashlib.sha512(url.encode('utf-8')).hexdigest()
         return filename
 
 addons = [FrameProxy()]
