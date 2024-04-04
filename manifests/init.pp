@@ -15,7 +15,7 @@ class frameproxy (
   String $ip = '172.17.0.4',
 ) {
   $hook_script =  "#!/usr/bin/env bash
-cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_KEY_PATH > ${datadir}/tls/cert
+cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/cert
 /usr/bin/systemctl restart container@frameproxy"
 
   firewall { '100 dnat for mitmproxy':
