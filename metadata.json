@@ -1,0 +1,16 @@
+{
+  "name": "halyard-frameproxy",
+  "version": "0.0.1",
+  "author": "Les Aker",
+  "license": "MIT",
+  "summary": "Configure mitmproxy for frame",
+  "source": "https://github.com/halyard/puppet-frameproxy",
+  "project_page": "https://github.com/halyard/puppet-frameproxy",
+  "issues_url": "https://github.com/halyard/puppet-frameproxy/issues",
+  "dependencies": [
+
+  ],
+  "operatingsystem_support": [
+
+  ]
+}
