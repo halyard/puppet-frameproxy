@@ -45,11 +45,6 @@ cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/intercept_cert
     table  => 'nat',
   }
 
-  file { "${datadir}/scripts/cache.py":
-    ensure => file,
-    source => 'puppet:///modules/frameproxy/cache.py',
-  }
-
   file { [
       $datadir,
       "${datadir}/cache",
@@ -59,28 +54,38 @@ cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/intercept_cert
       ensure => directory,
   }
 
-  -> acme::certificate { $proxy_hostname:
+  file { "${datadir}/scripts/cache.py":
+    ensure => file,
+    source => 'puppet:///modules/frameproxy/cache.py',
+  }
+
+  acme::certificate { $proxy_hostname:
     hook_script           => $proxy_hook_script,
     aws_access_key_id     => $proxy_aws_access_key_id,
     aws_secret_access_key => $proxy_aws_secret_access_key,
     email                 => $email,
   }
 
-  -> acme::certificate { $intercept_hostname:
+  acme::certificate { $intercept_hostname:
     hook_script           => $intercept_hook_script,
     aws_access_key_id     => $intercept_aws_access_key_id,
     aws_secret_access_key => $intercept_aws_secret_access_key,
     email                 => $email,
   }
 
-  -> docker::container { 'frameproxy':
-    image => 'mitmproxy/mitmproxy',
-    args  => [
+  docker::container { 'frameproxy':
+    image     => 'mitmproxy/mitmproxy',
+    args      => [
       "--ip ${ip}",
       "-v ${datadir}/cache:/opt/cache",
       "-v ${datadir}/tls:/opt/tls",
       "-v ${datadir}/scripts:/opt/scripts",
     ],
-    cmd   => join($command, ' '),
+    cmd       => join($command, ' '),
+    subscribe => [
+      File["${datadir}/scripts/cache.py"],
+      Acme::Certificate[$proxy_hostname],
+      Acme::Certificate[$intercept_hostname],
+    ],
   }
 }
