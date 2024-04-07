@@ -47,6 +47,7 @@ class FrameProxy:
         if not is_s3(parts):
             return
         logging.info('Matched S3 response: {0}'.format(parts[0]))
+        logging.info('Creating file path from URL: {0}'.format(flow.request.path))
         path = os.path.join(self.cache_dir, url_to_file(flow.request.path))
         if not os.path.isfile(path):
             logging.info('Writing cache file: {0}'.format(path))
@@ -58,7 +59,16 @@ class FrameProxy:
     def request(self, flow: http.HTTPFlow) -> None:
         if not flow.request.path.startswith("/_cache_/"):
             return
+        parts = flow.request.path.split('/', 4)
+        real_url = 'https://{0}.s3.{1}.amazonaws.com/{2}'.format(parts[2], parts[3], parts[4])
+        logging.info('Rewriting to real URL: {0}'.format(real_url))
+        flow.request.host = '{0}.s3.{1}.amazonaws.com'.format(parts[2], parts[3])
+        flow.request.path = '/' + parts[4]
+        flow.request.headers.pop('Authorization', None)
+
+        logging.info('Creating file path from URL: {0}'.format(flow.request.path))
         path = os.path.join(self.cache_dir, url_to_file(flow.request.path))
+
         logging.info('Received cache request: {0}'.format(path))
         if os.path.isfile(path):
             logging.info('Cache hit: {0}'.format(path))
@@ -67,13 +77,5 @@ class FrameProxy:
                 flow.response = http.Response.make(200, cache_content)
                 return
         logging.info('Cache miss: {0}'.format(path))
-        parts = flow.request.path.split('/', 4)
-        real_url = 'https://{0}.s3.{1}.amazonaws.com/{2}'.format(parts[2], parts[3], parts[4])
-        flow.request.url = real_url
-        logging.info('Rewriting to real URL: {0}'.format(real_url))
-        flow.request.host = '{0}.s3.{1}.amazonaws.com'.format(parts[2], parts[3])
-        flow.request.path = '/' + parts[4]
-        flow.request.headers.pop('Authorization', None)
 
 addons = [FrameProxy()]
-
