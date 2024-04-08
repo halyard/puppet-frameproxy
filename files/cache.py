@@ -53,8 +53,8 @@ class FrameProxy:
             logging.info('Writing cache file: {0}'.format(path))
             if not os.path.exists(os.path.dirname(path)):
                 os.makedirs(os.path.dirname(path))
-            with open(path, "w") as cache_file:
-                cache_file.write(flow.response.text)
+            with open(path, "wb") as cache_file:
+                cache_file.write(flow.response.content)
 
     def request(self, flow: http.HTTPFlow) -> None:
         if not flow.request.path.startswith("/_cache_/"):
@@ -79,3 +79,4 @@ class FrameProxy:
         logging.info('Cache miss: {0}'.format(path))
 
 addons = [FrameProxy()]
+
