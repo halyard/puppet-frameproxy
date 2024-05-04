@@ -72,7 +72,7 @@ class FrameProxy:
         logging.info('Received cache request: {0}'.format(path))
         if os.path.isfile(path):
             logging.info('Cache hit: {0}'.format(path))
-            with open(path, 'r') as cache_file:
+            with open(path, 'rb') as cache_file:
                 cache_content = cache_file.read()
                 flow.response = http.Response.make(200, cache_content)
                 return
