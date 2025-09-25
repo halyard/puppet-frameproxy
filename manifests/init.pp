@@ -74,7 +74,7 @@ cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/intercept_cert
   }
 
   docker::container { 'frameproxy':
-    image     => 'mitmproxy/mitmproxy',
+    image     => 'ghcr.io/mitmproxy/mitmproxy:latest',
     args      => [
       "--ip ${ip}",
       "-v ${datadir}/cache:/opt/cache",
