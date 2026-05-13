@@ -21,11 +21,11 @@ class frameproxy (
   String $ip = '172.17.0.4',
 ) {
   $proxy_hook_script =  "#!/usr/bin/env bash
-cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/proxy_cert
+cat \$LEGO_HOOK_CERT_KEY_PATH \$LEGO_HOOK_CERT_PATH > ${datadir}/tls/proxy_cert
 /usr/bin/systemctl restart container@frameproxy"
 
   $intercept_hook_script =  "#!/usr/bin/env bash
-cat \$LEGO_CERT_KEY_PATH \$LEGO_CERT_PATH > ${datadir}/tls/intercept_cert
+cat \$LEGO_HOOK_CERT_KEY_PATH \$LEGO_HOOK_CERT_PATH > ${datadir}/tls/intercept_cert
 /usr/bin/systemctl restart container@frameproxy"
 
   $command = [
